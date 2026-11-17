@@ -4,7 +4,7 @@ import { api } from '../api'
 
 const rows = ref([])
 const camps = ref([])
-const form = ref({ event_type: 'redeem', coupon_code: '', campaign_code: 'NEW10', amount: '' })
+const form = ref({ event_type: 'redeem', coupon_code: '', campaign_code: 'NEW10', amount: '', occurred_at: '' })
 const msg = ref('')
 const err = ref('')
 
@@ -22,9 +22,12 @@ async function submit() {
     const body = { ...form.value }
     if (body.amount === '') delete body.amount
     else body.amount = Number(body.amount)
+    if (!body.occurred_at) delete body.occurred_at
     const r = await api.addEvent(body)
     msg.value = `已写入事件 #${r.event_id}` + (r.fact_id ? ` / 事实 #${r.fact_id}` : '')
+      + (r.bypassed_seal ? '（已走未钉旁路，不进 sealed 批）' : '')
     form.value.coupon_code = ''
+    form.value.occurred_at = ''
     await load()
   } catch (e) { err.value = e.message }
 }
@@ -47,6 +50,7 @@ onMounted(load)
         </select>
       </label>
       <label>金额 <input v-model="form.amount" placeholder="可空=面额" /></label>
+      <label>occurred_at <input v-model="form.occurred_at" type="datetime-local" step="1" placeholder="可空=当前钉钟" /></label>
       <button type="button" @click="submit">写入事件</button>
       <button type="button" class="ghost" @click="load">刷新</button>
     </div>
@@ -55,7 +59,7 @@ onMounted(load)
   </div>
   <div class="panel">
     <table>
-      <thead><tr><th>ID</th><th>类型</th><th>券码</th><th>活动</th><th>金额</th><th>业务日</th><th>时刻</th></tr></thead>
+      <thead><tr><th>ID</th><th>类型</th><th>券码</th><th>活动</th><th>金额</th><th>业务日</th><th>时刻</th><th>批注</th></tr></thead>
       <tbody>
         <tr v-for="r in rows" :key="r.id">
           <td>{{ r.id }}</td>
@@ -65,6 +69,7 @@ onMounted(load)
           <td>{{ r.amount }}</td>
           <td>{{ r.business_day }}</td>
           <td>{{ r.occurred_at }}</td>
+          <td>{{ r.note }}</td>
         </tr>
       </tbody>
     </table>

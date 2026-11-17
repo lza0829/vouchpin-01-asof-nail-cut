@@ -20,7 +20,7 @@ onMounted(load)
       <div class="stat"><div class="k">今日核销额</div><div class="v ticket">{{ d.redeem_total_today }}</div></div>
       <div class="stat"><div class="k">日已钉扎</div><div class="v">{{ d.day_sealed ? '是' : '否' }}</div></div>
     </div>
-    <p class="msg" v-if="!err">票根洋红标出核销侧数字；钉扎后禁止再写入该日核销。</p>
+    <p class="msg" v-if="!err">票根洋红标出核销侧数字；钉扎按 as-of 前缀截断，sealed 后仅允许晚于批 as_of 的同日核销走未钉旁路。</p>
     <p class="msg err" v-if="err">{{ err }}</p>
   </div>
 </template>

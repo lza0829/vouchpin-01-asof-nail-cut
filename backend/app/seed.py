@@ -7,6 +7,11 @@ def seed_if_empty() -> None:
     init_db()
     conn = connect()
     try:
+        # 任何库启动都确保全局截断策略落位（互斥单值，默认 as-of 前缀）。
+        conn.execute(
+            "INSERT OR IGNORE INTO settings(key, value) VALUES('pin_cutoff_policy', 'as_of_prefix')"
+        )
+        conn.commit()
         n = conn.execute("SELECT COUNT(*) c FROM campaigns").fetchone()["c"]
         if n:
             return
@@ -14,6 +19,10 @@ def seed_if_empty() -> None:
         conn.execute(
             "INSERT OR REPLACE INTO settings(key, value) VALUES('business_day', ?)",
             (today,),
+        )
+        # 全局互斥的钉扎截断策略：只贯彻 as-of 前缀。
+        conn.execute(
+            "INSERT OR REPLACE INTO settings(key, value) VALUES('pin_cutoff_policy', 'as_of_prefix')",
         )
         campaigns = [
             ("NEW10", "新人立减10", 10.0, 30.0),
@@ -43,8 +52,9 @@ def seed_if_empty() -> None:
             )
             if et == "redeem":
                 conn.execute(
-                    "INSERT INTO redeem_facts(coupon_code, campaign_code, amount, business_day, event_id, status) VALUES(?,?,?,?,?, 'open')",
-                    (cc, camp, amt, day, cur.lastrowid),
+                    "INSERT INTO redeem_facts(coupon_code, campaign_code, amount, business_day, event_id, occurred_at, status) "
+                    "VALUES(?,?,?,?,?,?, 'open')",
+                    (cc, camp, amt, day, cur.lastrowid, at),
                 )
         conn.commit()
     finally:

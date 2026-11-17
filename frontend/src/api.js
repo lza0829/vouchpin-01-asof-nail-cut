@@ -19,9 +19,18 @@ export const api = {
   events: (day) => req('/events' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
   addEvent: (body) => req('/events', { method: 'POST', body: JSON.stringify(body) }),
   facts: (day) => req('/facts' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
-  preview: (day) => req('/redeem/preview' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
+  preview: (day, asOf) => {
+    const q = []
+    if (day) q.push(`business_day=${encodeURIComponent(day)}`)
+    if (asOf) q.push(`as_of=${encodeURIComponent(asOf)}`)
+    return req('/redeem/preview' + (q.length ? `?${q.join('&')}` : ''))
+  },
   seal: (body) => req('/redeem/seal', { method: 'POST', body: JSON.stringify(body) }),
   batches: () => req('/batches'),
+  batch: (id) => req(`/batches/${id}`),
   getDay: () => req('/settings/day'),
   setDay: (business_day) => req('/settings/day', { method: 'PUT', body: JSON.stringify({ business_day }) }),
+  getPinPolicy: () => req('/settings/pin-policy'),
+  setPinPolicy: (pin_cutoff_policy) =>
+    req('/settings/pin-policy', { method: 'PUT', body: JSON.stringify({ pin_cutoff_policy }) }),
 }
